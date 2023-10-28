@@ -3,11 +3,21 @@ import Header from "./components/Header/Header";
 import { PokemonItem } from "./components/PokemonItem/PokemonItem";
 import { Link } from "react-router-dom";
 import axios from "axios";
-
 import "./App.css";
 
 function App() {
   const [pokemonList, setPokemonList] = useState([]);
+  const [filteredData, setFilteredData] = useState([]);
+  const [textoDeBusqueda, setTextoDeBusqueda] = useState(""); // Corrección aquí
+
+  const filtrarLista = (textoDeBusqueda) => {
+    const resultado = pokemonList.filter(
+      (pokemon) =>
+        pokemon.name.includes(textoDeBusqueda)
+    );
+
+    setFilteredData(resultado.length > 0 ? resultado : pokemonList);
+  };
 
   useEffect(() => {
     const solicitarDetallePokemon = async (pokemonObjects) => {
@@ -18,6 +28,7 @@ function App() {
         }),
       );
       setPokemonList(detailedPokemonList);
+      filtrarLista(textoDeBusqueda); // Agregamos la invocación aquí para inicializar el filteredData
     };
 
     const fetchPokemonList = async () => {
@@ -32,29 +43,28 @@ function App() {
       }
     };
 
-    /*  const lista = [];
-    axios
-      .get("https://pokeapi.co/api/v2/pokemon?limit=10&offset=0")
-      .then((resp) =>
-        resp?.data?.results.map((pokemonObject) => {
-          axios
-            .get(pokemonObject.url)
-            .then((pokemon) => lista.push(pokemon.data));
-        }),
-      );
-    pokemonList.length > 0 && setPokemonList(lista); */
     fetchPokemonList();
   }, []);
+
+  useEffect(() => {
+    filtrarLista(textoDeBusqueda); // Actualizamos la lista filtrada cuando cambia textoDeBusqueda
+  }, [textoDeBusqueda]);
 
   return (
     <>
       <div className="container">
-        <Header />
+        <Header
+          textoDeBusqueda={textoDeBusqueda}
+          setTextoDeBusqueda={setTextoDeBusqueda}
+        />
         <div className="pokemonList">
-          {pokemonList !== [] &&
-            pokemonList.map((pokemon, index) => (
-              <Link key={index} to={`/detalle/${pokemon.name}/${pokemon.id}`}>
-                <PokemonItem  pokemonData={pokemon} />
+          {filteredData.length > 0 &&
+            filteredData.map((pokemon) => (
+              <Link
+                key={pokemon.id}
+                to={`/detalle/${pokemon.name}/${pokemon.id}`}
+              >
+                <PokemonItem pokemonData={pokemon} />
               </Link>
             ))}
         </div>
